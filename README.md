@@ -4,3 +4,5 @@ NumPy Implementation of the Recurrent Attention Model as presented in Recurrent 
 Image classification task.
 
 Written using Python 3.6+ and NumPy 1.11+.
+
+MNIST dataset obtained from ttps://github.com/mnielsen/neural-networks-and-deep-learning/tree/master/data.
