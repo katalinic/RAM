@@ -1,5 +1,6 @@
 import Util
 import AgentNetworks
+import numpy as np
 
 class RAM(object):
     
