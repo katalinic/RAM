@@ -1,4 +1,3 @@
-
 import numpy as np
 import Util
 
@@ -10,17 +9,16 @@ class GlimpseNet(object):
         size_retina = g_w x g_w (int)
         '''
         self.W_retina = np.random.randn(size_hgl, size_retina)/np.sqrt(size_retina+size_hgl)
-        self.b_retina = np.random.randn(size_hgl)/np.sqrt(size_hgl)
+        self.b_retina = np.zeros(size_hgl)
         
         self.W_location = np.random.randn(size_hgl, size_l)/np.sqrt(size_hgl)
-        self.b_location = np.random.randn(size_hgl)/np.sqrt(size_hgl)
+        self.b_location = np.zeros(size_hgl)
         
         self.W_retina_h_to_g = np.random.randn(size_g, size_hgl)/np.sqrt(size_hgl+size_g)
-        self.b_retina_h_to_g = np.random.randn(size_g)/np.sqrt(size_g)
+        self.b_retina_h_to_g = np.zeros(size_g)
         
         self.W_location_h_to_g = np.random.randn(size_g, size_hgl)/np.sqrt(size_hgl+size_g)
-        self.b_location_h_to_g = np.random.randn(size_g)/np.sqrt(size_g)
-        
+        self.b_location_h_to_g = np.zeros(size_g)
         
         '''
         To be reset to 0 after mini-batch update
@@ -86,10 +84,6 @@ class GlimpseNet(object):
         
     def fwd_pass(self, M, l, g):
         
-        '''
-        M - image
-        l - location
-        '''
         self.l.append(l)
         
         self.retina_ReLU.append(Util.ReLU())
@@ -179,6 +173,18 @@ class GlimpseNet(object):
         return None
     
     def weight_update(self, momentum, learning_rate, batch_size=20):
+
+        self.grad_W_retina = Util.Clip(self.grad_W_retina)
+        self.grad_b_retina = Util.Clip(self.grad_b_retina)
+        
+        self.grad_W_location = Util.Clip(self.grad_W_location)
+        self.grad_b_location = Util.Clip(self.grad_b_location)
+        
+        self.grad_W_retina_h_to_g = Util.Clip(self.grad_W_retina_h_to_g)
+        self.grad_b_retina_h_to_g = Util.Clip(self.grad_b_retina_h_to_g)
+        
+        self.grad_W_location_h_to_g = Util.Clip(self.grad_W_location_h_to_g)
+        self.grad_b_location_h_to_g = Util.Clip(self.grad_b_location_h_to_g)
         
         self.momentum_W_retina *= momentum
         self.momentum_b_retina *= momentum
@@ -229,14 +235,13 @@ class GlimpseNet(object):
         self.grad_b_location_h_to_g = np.zeros_like(self.b_location_h_to_g)
 
         return None
-
-
+    
 class ActionNet(object):
     
     def __init__(self, size_out=10, size_h=256):
         
         self.W_out = np.random.randn(size_out, size_h)/np.sqrt(size_h+size_out)
-        self.b_out = np.random.randn(size_out)/np.sqrt(size_out)
+        self.b_out = np.zeros(size_out)
         
         self.grad_W_out = np.zeros_like(self.W_out)
         self.grad_b_out = np.zeros_like(self.b_out)
@@ -274,6 +279,9 @@ class ActionNet(object):
         return None
     
     def weight_update(self, momentum, learning_rate, batch_size=20):
+
+        self.grad_W_out = Util.Clip(self.grad_W_out)
+        self.grad_b_out = Util.Clip(self.grad_b_out)
         
         self.momentum_W_out *= momentum
         self.momentum_b_out *= momentum
@@ -289,7 +297,6 @@ class ActionNet(object):
 
         return None
 
-
 class LocationNet(object):
     
     def __init__(self, sigma, size_h=256, size_l=2):
@@ -297,7 +304,7 @@ class LocationNet(object):
         self.sigma = sigma
         
         self.W_l = np.random.randn(size_l, size_h)/np.sqrt(size_h+size_l)
-        self.b_l = np.random.randn(size_l)/np.sqrt(size_l)
+        self.b_l = np.zeros(size_l)
         
         self.grad_W_l = np.zeros_like(self.W_l)
         self.grad_b_l = np.zeros_like(self.b_l)
@@ -309,7 +316,7 @@ class LocationNet(object):
         self.l_tanh = []
         self.l_sampled = []
         
-    def fwd_pass(self, h):
+    def fwd_pass(self, h, sample):
 
         self.Tanh.append(Util.Tanh())
         
@@ -318,8 +325,10 @@ class LocationNet(object):
         self.l_tanh.append(self.Tanh[-1].fwd_pass(l))
         
         self.l_sampled.append(np.random.normal(self.l_tanh[-1], self.sigma))
-        
-        return np.tanh(self.l_sampled[-1])
+
+        l_out = np.tanh(self.l_sampled[-1]) if sample else self.l_tanh[-1]
+
+        return l_out
     
     def back_pass(self, h, r, b):
         
@@ -347,6 +356,9 @@ class LocationNet(object):
         return None
     
     def weight_update(self, momentum, learning_rate, batch_size=20):
+
+        self.grad_W_l = Util.Clip(self.grad_W_l)
+        self.grad_b_l = Util.Clip(self.grad_b_l)
         
         self.momentum_W_l *= momentum
         self.momentum_b_l *= momentum
@@ -365,13 +377,12 @@ class LocationNet(object):
         
         return None
 
-
 class CoreNet(object):
     
     def __init__(self, size_h=256):
         
         self.W_h_ht = np.random.randn(size_h, size_h)/np.sqrt(size_h+size_h)
-        self.b_h_ht = np.random.randn(size_h)/np.sqrt(size_h)
+        self.b_h_ht = np.zeros(size_h)
         
         self.grad_W_h_ht = np.zeros_like(self.W_h_ht)
         self.grad_b_h_ht = np.zeros_like(self.b_h_ht)
@@ -380,7 +391,7 @@ class CoreNet(object):
         self.momentum_b_h_ht = np.zeros_like(self.b_h_ht)
         
         self.W_h_g = np.random.randn(size_h, size_h)/np.sqrt(size_h+size_h)
-        self.b_h_g = np.random.randn(size_h)/np.sqrt(size_h)
+        self.b_h_g = np.zeros(size_h)
         
         self.grad_W_h_g = np.zeros_like(self.W_h_g)
         self.grad_b_h_g = np.zeros_like(self.b_h_g)
@@ -429,6 +440,12 @@ class CoreNet(object):
         return None
     
     def weight_update(self, momentum, learning_rate, batch_size=20):
+
+        self.grad_W_h_g = Util.Clip(self.grad_W_h_g)
+        self.grad_b_h_g = Util.Clip(self.grad_b_h_g)
+        
+        self.grad_W_h_ht = Util.Clip(self.grad_W_h_ht)
+        self.grad_b_h_ht = Util.Clip(self.grad_b_h_ht)
         
         self.momentum_W_h_ht *= momentum
         self.momentum_b_h_ht *= momentum
@@ -455,4 +472,3 @@ class CoreNet(object):
         self.grad_b_h_g = np.zeros_like(self.b_h_g)
         
         return None
-

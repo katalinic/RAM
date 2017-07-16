@@ -50,6 +50,10 @@ class ReLU(object):
             dz_relu[self.z<=0] = 0
         
         return dz_relu
+    
+def Clip(arr):
+    
+    return np.clip(arr, -5, 5)
 
 class Add(object):
   
