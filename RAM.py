@@ -40,7 +40,7 @@ class RAM(object):
         
         print ("Initialisation complete")
         
-    def train_model(self, train_data, target_data):
+    def train_model(self, train_data, target_data, test_data, test_target):
         
         print ("Commencing training")
         
@@ -126,6 +126,7 @@ class RAM(object):
             self.learning_rate = 0.97*self.learning_rate
             self.learning_rate = max(self.min_learning_rate,self.learning_rate)
             
+            print ("Epoch: ", ep, "Test classification accuracy: ", self.test_model(test_data, test_target))
             
         print ("Training concluded")
         
@@ -172,6 +173,6 @@ class RAM(object):
 
             num_correct += r
 
-        print ("Test classification accuracy: ", num_correct/test_data.shape[0])
+        accuracy = num_correct/test_data.shape[0]
         
-        return None
+        return accuracy
