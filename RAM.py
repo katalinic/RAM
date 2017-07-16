@@ -45,7 +45,7 @@ class RAM(object):
         
         for ep in range(self.max_epochs):
             
-            for q in range(train.shape[0]):
+            for q in range(train_data.shape[0]):
                 
                 self.Core.reset_storage()
                 self.Location.reset_storage()
