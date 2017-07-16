@@ -32,8 +32,7 @@ def train():
     train, target, test, test_target = get_all_data('your_path')
 
     RAM = RAM.RAM()
-    RAM.train_model(train, target)
-    RAM.test_model(test, test_target)
+    RAM.train_model(train, target, test, test_target)
 
 if __name__=="__main__":
     train()
