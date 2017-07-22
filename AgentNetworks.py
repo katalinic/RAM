@@ -65,22 +65,28 @@ class GlimpseNet(object):
         
     @staticmethod
     def retina(M, l, g):
+    
+        s = int(M.shape[0]/2)
+    
+        v = int(g/2)
+    
+        l_im = (l+1)*s
+    
+        x_corner = int(l_im[0])
+        y_corner = int(l_im[1])
 
-        s = M.shape[0]
-
-        l1 = np.round((s-1)/2*(l+1)).astype(int)+g
-
-        M_padded = np.pad(M,(g,g),mode='constant')
-
-        g /= 2
-        g = int(g)
+        p = np.remainder(l_im[0], x_corner) if x_corner>0 else l_im[0]
+        q = np.remainder(l_im[1], y_corner) if y_corner>0 else l_im[1]
+    
+        kernel = np.array([(1-p)*(1-q),(1-p)*q,(1-q)*p,q*p]).reshape(2,2)
+    
+        M_padded = np.pad(M,(v,v),mode='constant')
+    
+        retina_input = M_padded[y_corner:y_corner+2*v+1,x_corner:x_corner+2*v+1]
+    
+        retina = kernel[0,0]*retina_input[0:-1,0:-1] + kernel[0,1]*retina_input[0:-1,1:] + kernel[1,0]*retina_input[1:,0:-1] + kernel[1,1]*retina_input[1:,1:]
         
-        x_left = l1[0]-g	
-        x_right = l1[0]+g
-        y_top = l1[1]-g
-        y_bottom = l1[1]+g
-
-        return M_padded[y_top:y_bottom,x_left:x_right]
+        return retina
         
     def fwd_pass(self, M, l, g):
         
